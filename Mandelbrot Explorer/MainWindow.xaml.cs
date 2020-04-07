@@ -112,6 +112,7 @@ namespace Mandelbrot_Explorer
             try
             {
                 Bitmap canvas = mandelbrot.MakeBitmap(Slider_Shift.Value, Convert.ToInt32(TextBox_IterCycle.Text));
+                fractalBitmap = canvas;
                 FractalImage.Source = BitmapToImage(canvas);
             }
             catch (Exception ex)
