@@ -270,7 +270,10 @@ namespace Mandelbrot_Explorer
                           orderby p.Position
                           select p;
             points = points2.ToList<ControlPoint>();
-            
+            if (points[0].Position > 0) points[0].Position = 0;
+            if (points[points.Count - 1].Position < 1) points[points.Count - 1].Position = 1;
+
+
             return points;
         }
     }
