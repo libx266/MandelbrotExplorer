@@ -17,7 +17,7 @@ namespace ConsoleMandelBrot
         public int Resolution { get; set; }
         public int MaxIter { get; set; }
         public int iterDone = 0;
-        public int iterCycle = 400;
+        
         public double ImageWidth { get; set; }
         public double XCenter { get; set; }
         public double YCenter { get; set; }
@@ -63,8 +63,23 @@ namespace ConsoleMandelBrot
             for (int x = 0; x < Resolution; x++)
             {
                 for (int y = 0; y < Resolution; y++)
-                { 
+                {
                     canvas.SetPixel(x, y, MandelbrotColor(dataIter[x, y], dataAbs[x, y], MaxIter));
+                }
+            }
+
+            return canvas;
+        }
+
+        public Bitmap MakeBitmap(double shift, int iterCycle)
+        {
+            Bitmap canvas = new Bitmap(Resolution, Resolution);
+
+            for (int x = 0; x < Resolution; x++)
+            {
+                for (int y = 0; y < Resolution; y++)
+                {
+                    canvas.SetPixel(x, y, MandelbrotColor(dataIter[x, y], dataAbs[x, y], MaxIter, shift, iterCycle));
                 }
             }
 
@@ -78,7 +93,9 @@ namespace ConsoleMandelBrot
             double x = XCenter - ImageWidth / 2.0d;
             double y = YCenter - ImageWidth / 2.0d;
             object locker = new object();
-            //Mutex mutexObj = new Mutex();
+            
+
+
             for (int xpix = 0; xpix < Resolution; xpix++)
             {
                 Parallel.For(0, Resolution, ypix =>
@@ -95,6 +112,8 @@ namespace ConsoleMandelBrot
                     lock (dataAbs)
                         dataAbs[xpix, ypix] = tuple.Item2;
                     
+
+
                 });
                 x += ImageWidth / Resolution;
             }
@@ -115,15 +134,28 @@ namespace ConsoleMandelBrot
             }
             */
         }        
-
+        public async void CalculateAsync()
+        {
+            await Task.Run(() => Calculate());
+        }
         private Color MandelbrotColor(int iter, double abs, int maxIter)
         {
             if (iter == -1) return Color.FromArgb(0, 0, 0);
-            return ColorGradient.GetColor(Smooth(iter, abs) / maxIter);
+            //return ColorGradient.GetColor(Smooth(iter, abs) / maxIter);
             iterDone++;
             if (abs > 10e3) abs = 10e3;
             //Console.WriteLine(abs);
-            //return colorGradient.GetColor(Smooth(i, abs) % iterCycle / iterCycle);
+            return ColorGradient.GetColor(Smooth(iter, abs) % 400 / 400);
+        }
+
+        private Color MandelbrotColor(int iter, double abs, int maxIter, double shift, int iterCycle)
+        {
+            if (iter == -1) return Color.FromArgb(0, 0, 0);
+            //return ColorGradient.GetColor(Smooth(iter, abs) / maxIter);
+            iterDone++;
+            if (abs > 10e3) abs = 10e3;
+            //Console.WriteLine(abs);
+            return ColorGradient.GetColor((Smooth(iter, abs) + shift) % iterCycle / iterCycle);
         }
         private (int,double) CalculateIters(double x, double y, int maxIter)
         {

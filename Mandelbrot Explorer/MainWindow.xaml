@@ -5,38 +5,75 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Mandelbrot_Explorer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Mandelbrot Explorer" Height="720" Width="1280">
     <Grid>
         <DockPanel LastChildFill="True">
-            <Grid DockPanel.Dock="Right" MinWidth="250">
+            <Grid DockPanel.Dock="Right" MinWidth="300">
+                <Border BorderBrush="Black" BorderThickness="1"/>
                 <StackPanel Orientation="Vertical" Margin="10">
-                    <Button Content="Start" Click="Button_Start" Margin="5"></Button>
+                    <Button Content="Start" Click="Button_Start" Margin="3"></Button>
+                    
+                    <Label HorizontalAlignment="Left" FontWeight="Bold">Position</Label>
                     <StackPanel Orientation="Horizontal">
-                        <Label>Coordinates:</Label>
-                        <TextBox x:Name="textbox_xpos" MinWidth="50" Margin="5" Text="0"/>
-                        <TextBox x:Name="textbox_ypos" MinWidth="50" Margin="5" Text="0"/>
+                        <Label>X</Label>
+                        <TextBox x:Name="textbox_xpos" MinWidth="100" Margin="3" Text="0.432539867562512"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Label>Width:</Label>
-                        <TextBox x:Name="textbox_width" MinWidth="50" Margin="5" Text="2"/>
+                        <Label>Y</Label>
+                        <TextBox x:Name="textbox_ypos" MinWidth="100" Margin="3" Text="0.226118675951765"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Label>Max Iterrations:</Label>
-                        <TextBox x:Name="textbox_iter" MinWidth="50" Margin="5"  Text="200"/>
+                        <Label>Width</Label>
+                        <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="5E-13" />
+                    </StackPanel>
+                    
+                    <Label HorizontalAlignment="Left" FontWeight="Bold">Render Parametrs</Label>
+                    <StackPanel Orientation="Horizontal">
+                        <Label>Max iterations</Label>
+                        <ComboBox x:Name="ComboBox_Iter" Margin="3" SelectedIndex="3" SelectionChanged="ComboBox_Iter_SelectionChanged">
+                            <TextBlock>200</TextBlock>
+                            <TextBlock>500</TextBlock>
+                            <TextBlock>1000</TextBlock>
+                            <TextBlock>5000</TextBlock>
+                            <TextBlock>10000</TextBlock>
+                            <TextBlock>Custom</TextBlock>
+                        </ComboBox>
+                        <TextBox x:Name="TextBox_CustomIter" MinWidth="50" Margin="5" Visibility="Collapsed" TextChanged="TextBox_CustomIter_TextChanged"></TextBox>
+
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <Label>Resolution:</Label>
+                        <Label>Resolution</Label>
                         <TextBox x:Name="textbox_res" MinWidth="50" Margin="5" Text="500"/>
                     </StackPanel>
+
+                    <Label HorizontalAlignment="Left" FontWeight="Bold">Coloring Parameths</Label>
+                    <StackPanel Orientation="Horizontal">
+                        <Label>Iterations in cycle</Label>
+                        <TextBox x:Name="TextBox_IterCycle" MinWidth="50" Margin="5" Text="400" TextChanged="TextBox_IterCycle_TextChanged"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label >Shift</Label>
+                        <Slider x:Name="Slider_Shift" MinWidth="200" VerticalAlignment="Center" AutoToolTipPlacement="TopLeft"
+                                AutoToolTipPrecision="0" Maximum="400" ValueChanged="Slider_Shift_ValueChanged"
+                                AutomationProperties.HelpText="Smooth change of colors"/>
+                    </StackPanel>
+                    <Button Margin="5" Click="Button_Recoloring">Recoloring</Button>
+
                     <Button Margin="5" Click="Button_Save">Save</Button>
+
                 </StackPanel>
+                <Grid Grid.Row="0" Grid.Column="0">
+                    
+                </Grid>
+                
+
             </Grid>
             <Grid >
                 <Image x:Name="FractalImage">
-                    
+
                 </Image>
             </Grid>
         </DockPanel>
-        
+
     </Grid>
 </Window>
