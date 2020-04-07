@@ -56,6 +56,7 @@ namespace Mandelbrot_Explorer
         private void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS)
         {
             Mandelbrot mandelbrot = new Mandelbrot(x, y, width, RESOLUTION, ITERATIONS);
+            mandelbrot.Calculate();
             Bitmap canvas = mandelbrot.MakeBitmap();
             fractalBitmap = canvas;
 

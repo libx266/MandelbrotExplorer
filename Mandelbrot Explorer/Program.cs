@@ -35,8 +35,8 @@ namespace ConsoleMandelBrot
                 {
                     Console.WriteLine(ex.Message);
                 }
-                mandelbrot.maxIter += 0;
-                mandelbrot.imageWidth *= 0.7;
+                mandelbrot.MaxIter += 0;
+                mandelbrot.ImageWidth *= 0.7;
             }
             Process.Start(Environment.CurrentDirectory);
 
