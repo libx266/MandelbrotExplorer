@@ -1,5 +1,5 @@
 # Mandelbrot Explorer
-
+![alt text](/Img/Program.jpg)
 This program is written using WPF C# to explore the Mandelbrot Set. 
 
 ## What is Mandelbrot Set?
@@ -10,6 +10,10 @@ If you are here, then most likely you know what it is. If you do not know, then 
 - https://mathworld.wolfram.com/MandelbrotSet.html
 - https://www.youtube.com/watch?v=FFftmWSzgmk (I love this guys)
 - https://www.youtube.com/watch?v=FFftmWSzgmk
+
+## How to install the program?
+
+You can download the WPF project for VS or download the compiled program and immediately start exploring the world of fractals. To do this, download the 'Installer' folder. In it you will find the ordinary program installer.
 
 ## How to use the program?
 
