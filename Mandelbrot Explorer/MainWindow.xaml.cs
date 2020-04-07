@@ -21,7 +21,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-
 namespace Mandelbrot_Explorer
 {
     /// <summary>
@@ -32,17 +31,44 @@ namespace Mandelbrot_Explorer
         public MainWindow()
         {
             InitializeComponent();
+            Init();
         }
         private Bitmap fractalBitmap;
         private Mandelbrot mandelbrot;
 
-     
-        
+        private void Init()
+        {
+            List<ControlPoint> list = new List<ControlPoint>() {
+                new ControlPoint(0.0, System.Drawing.Color.FromArgb(255, 255, 255)),
+                new ControlPoint(0.125, System.Drawing.Color.FromArgb(255, 0, 0)),
+                new ControlPoint(0.25, System.Drawing.Color.FromArgb(21, 0, 255)),
+                new ControlPoint(0.375, System.Drawing.Color.FromArgb(153, 218, 255)),
+                new ControlPoint(0.50, System.Drawing.Color.FromArgb(0, 251, 255)),
+                new ControlPoint(0.675, System.Drawing.Color.FromArgb(0, 255, 17)),
+                new ControlPoint(0.75, System.Drawing.Color.FromArgb(251, 255, 0)),
+                new ControlPoint(1, System.Drawing.Color.FromArgb(0, 0, 0))
+            };
+            foreach (var point in list)
+            {
+                AddControlPoint(point.Position, new System.Windows.Media.Color
+                {
+                    A = 255,
+                    R = point.Color.R,
+                    G = point.Color.G,
+                    B = point.Color.B
+                });
+            }
+            
+        }       
         private void Button_Start(object sender, RoutedEventArgs e)
         {
 
             try
             {
+                List<ControlPoint> list = GetControlPoints();
+                ColorGradient colorGradient = new ColorGradient(list);
+                
+                
                 int iterations;
                 if (((TextBlock)ComboBox_Iter.SelectedItem).Text == "Custom")
                 {
@@ -55,7 +81,8 @@ namespace Mandelbrot_Explorer
                     Convert.ToDouble(textbox_ypos.Text.Replace('.', ',')),
                     Convert.ToDouble(textbox_width.Text.Replace('.', ',')),
                     Convert.ToInt32(textbox_res.Text),
-                    iterations);
+                    iterations,
+                    colorGradient);
             }
             catch (Exception ex)
             {
@@ -64,12 +91,12 @@ namespace Mandelbrot_Explorer
             
                 
         }
-
-        private void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS)
+        private void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS, ColorGradient colorGradient)
         {
             if (mandelbrot == null)
             {
                 mandelbrot = new Mandelbrot(x, y, width, RESOLUTION, ITERATIONS);
+                mandelbrot.ColorGradient = colorGradient;
             }
             else
             {
@@ -78,6 +105,7 @@ namespace Mandelbrot_Explorer
                 mandelbrot.ImageWidth = width;
                 mandelbrot.Resolution = RESOLUTION;
                 mandelbrot.MaxIter = ITERATIONS;
+                mandelbrot.ColorGradient = colorGradient;
             }
             mandelbrot.Calculate();
             
@@ -97,7 +125,6 @@ namespace Mandelbrot_Explorer
             
             
         }
-
         private ImageSource BitmapToImage(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
@@ -126,7 +153,6 @@ namespace Mandelbrot_Explorer
                 fractalBitmap.Save(saveFileDialog.FileName);
             }
         }
-
         private void ComboBox_Iter_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
@@ -142,12 +168,13 @@ namespace Mandelbrot_Explorer
                 //Slider_Shift.Maximum = Convert.ToDouble(((TextBlock)ComboBox_Iter.SelectedItem).Text);
             }
         }
-
         private void ReColoring()
         {
             if (mandelbrot == null) return;
+            
             try
             {
+                mandelbrot.ColorGradient = new ColorGradient(GetControlPoints());
                 fractalBitmap = mandelbrot.MakeBitmap(Slider_Shift.Value,
                                                       Convert.ToInt32(TextBox_IterCycle.Text));
                 FractalImage.Source = BitmapToImage(fractalBitmap);
@@ -157,19 +184,7 @@ namespace Mandelbrot_Explorer
                 MessageBox.Show(ex.Message);
             }
             
-        }
-    
-
-        private void TextBox_CustomIter_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //Slider_Shift.Maximum = Convert.ToDouble(TextBox_CustomIter.Text);
-        }
-
-
-        private void Slider_Shift_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-
-        }
+        }  
         private void TextBox_IterCycle_TextChanged(object sender, TextChangedEventArgs e)
         {
             if(Slider_Shift!=null)
@@ -181,16 +196,82 @@ namespace Mandelbrot_Explorer
                 {
                     
                 }
-                
-            
         }
-
         private void Button_Recoloring(object sender, RoutedEventArgs e)
         {
             if(mandelbrot!=null)
                 ReColoring();
         }
+        private void Button_AddCP_Click(object sender, RoutedEventArgs e)
+        {
+            AddControlPoint(0.0, new System.Windows.Media.Color() { A = 255, R = 255, G = 255, B = 255 });
+        }
+        private void AddControlPoint(double pos, System.Windows.Media.Color color)
+        {
+            StackPanel stack = new StackPanel();
+            stack.Orientation = Orientation.Horizontal;
 
-        
+            TextBox text = new TextBox();
+            text.Text = pos.ToString();
+            text.MinWidth = 50;
+            text.VerticalAlignment = VerticalAlignment.Center;
+            text.Margin = new Thickness(5, 2, 5, 2);
+            text.Name = $"TextBox_CP{ListBox_ControlPoints.Items.Count}";
+
+
+            Xceed.Wpf.Toolkit.ColorPicker colorPicker = new Xceed.Wpf.Toolkit.ColorPicker();
+            colorPicker.MinWidth = 150;
+            colorPicker.Margin = new Thickness(5, 2, 5, 2);
+            colorPicker.SelectedColor = color;
+
+            Button destroyer = new Button();
+            destroyer.Name = $"Button_CP{ListBox_ControlPoints.Items.Count}";
+            destroyer.Content = "X";
+            destroyer.Width = 20;
+            destroyer.Margin = new Thickness(5, 2, 5, 2);
+            destroyer.Click += Button_DeleteCP_Click;
+
+            stack.Children.Add(text);
+            stack.Children.Add(colorPicker);
+            stack.Children.Add(destroyer);
+
+            stack.Name = $"StackPanel_CP{ListBox_ControlPoints.Items.Count}";
+
+            ListBox_ControlPoints.Items.Add(stack);
+        }
+        private void Button_DeleteCP_Click(object sender, RoutedEventArgs e)
+        {
+            foreach(StackPanel panel in ListBox_ControlPoints.Items)
+            {
+                if (panel.Children.IndexOf((Button)sender) != -1)
+                {
+                    ListBox_ControlPoints.Items.Remove(panel);
+                    return;
+                }
+            }
+        }
+        private void Button_ClearCP_Click(object sender, RoutedEventArgs e)
+        {
+            ListBox_ControlPoints.Items.Clear();
+            AddControlPoint(0, new System.Windows.Media.Color { A = 255, R = 255, G = 255, B = 255 });
+            //AddControlPoint(1, new System.Windows.Media.Color { A = 255, R = 0, G = 0, B = 0 });
+        }
+        private List<ControlPoint> GetControlPoints()
+        {
+            List<ControlPoint> points = new List<ControlPoint>();
+            foreach (StackPanel panel in ListBox_ControlPoints.Items)
+            {
+                double pos = Convert.ToDouble(panel.Children.OfType<TextBox>().ToList()[0].Text);
+                System.Windows.Media.Color badColor = (System.Windows.Media.Color)panel.Children.OfType<Xceed.Wpf.Toolkit.ColorPicker>().ToList()[0].SelectedColor;
+                System.Drawing.Color color = System.Drawing.Color.FromArgb(badColor.R, badColor.G, badColor.B);
+                points.Add(new ControlPoint(pos, color));
+            }
+            var points2 = from p in points
+                          orderby p.Position
+                          select p;
+            points = points2.ToList<ControlPoint>();
+            
+            return points;
+        }
     }
 }
