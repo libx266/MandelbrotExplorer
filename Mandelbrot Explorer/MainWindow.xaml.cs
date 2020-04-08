@@ -120,11 +120,6 @@ namespace Mandelbrot_Explorer
                 MessageBox.Show(ex.Message);
             }
             
-
-            
-            
-            
-            
         }
         private ImageSource BitmapToImage(Bitmap bitmap)
         {
@@ -260,9 +255,10 @@ namespace Mandelbrot_Explorer
         private List<ControlPoint> GetControlPoints()
         {
             List<ControlPoint> points = new List<ControlPoint>();
+            if (ListBox_ControlPoints.Items.Count< 2) throw new Exception("Должны быть как минимум 2 контрольные точки");
             foreach (StackPanel panel in ListBox_ControlPoints.Items)
             {
-                double pos = Convert.ToDouble(panel.Children.OfType<TextBox>().ToList()[0].Text);
+                double pos = Convert.ToDouble(panel.Children.OfType<TextBox>().ToList()[0].Text.Replace('.',','));
                 System.Windows.Media.Color badColor = (System.Windows.Media.Color)panel.Children.OfType<Xceed.Wpf.Toolkit.ColorPicker>().ToList()[0].SelectedColor;
                 System.Drawing.Color color = System.Drawing.Color.FromArgb(badColor.R, badColor.G, badColor.B);
                 points.Add(new ControlPoint(pos, color));
@@ -273,7 +269,7 @@ namespace Mandelbrot_Explorer
             points = points2.ToList<ControlPoint>();
             if (points[0].Position > 0) points[0].Position = 0;
             if (points[points.Count - 1].Position < 1) points[points.Count - 1].Position = 1;
-
+            
 
             return points;
         }
