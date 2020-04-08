@@ -26,5 +26,17 @@ Select the resolution of your image. While looking for a beautiful frame, I advi
 This is the most difficult part of the setup, which requires imagination (and complex algorithms over which I racked my brains for you).
 When you clicked on the start button, the program compiled a matrix, each cell of which shows on which iteration we realized that the point does not belong to the Mandelbrot set. Depending on this number, we will paint over each pixel. The program uses a method of control points. Let's consider his work on examples and you will understand how it works.
 #### Example 1
-![alt text](/Img/Exe1.png)
+![Example1](/Img/Exe1.png)
+We work with three variables: 
+- Iterations in cycle `cycleIter=1000`
+- Shift `shift=0`
+- And for each pixel we know how many iterations `i` we needed to understand that it does not belong to the Mandelbrot set (or belongs to)
+
+In this example we have two control points {0;white} and {1;black}.
+For each pixel we are calculating a number using the simple formula `num=[(i+shift) mod cycleIter]/cycleIter`
+The `num` takes values from 0 to 1. We look at which control point it is closer and select the appropriate color. If our `num` 0.5, then the pixel will be gray, and if 0 - then white.
+#### Example 2
+![Example2](/Img/Exe2.png)
+>But what does `shift` mean?
+
 
