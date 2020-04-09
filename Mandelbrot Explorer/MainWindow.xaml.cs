@@ -58,9 +58,12 @@ namespace Mandelbrot_Explorer
                     B = point.Color.B
                 });
             }
-            
+
+            Button_Start(new object(), new RoutedEventArgs());
+
+
         }       
-        private void Button_Start(object sender, RoutedEventArgs e)
+        private async void Button_Start(object sender, RoutedEventArgs e)
         {
 
             try
@@ -219,6 +222,7 @@ namespace Mandelbrot_Explorer
             colorPicker.MinWidth = 150;
             colorPicker.Margin = new Thickness(5, 2, 5, 2);
             colorPicker.SelectedColor = color;
+            colorPicker.Closed += ColorPicker_Closed;
 
             Button destroyer = new Button();
             destroyer.Name = $"Button_CP{ListBox_ControlPoints.Items.Count}";
@@ -235,6 +239,13 @@ namespace Mandelbrot_Explorer
 
             ListBox_ControlPoints.Items.Add(stack);
         }
+
+        private void ColorPicker_Closed(object sender, RoutedEventArgs e)
+        {
+            ReColoring();
+        }
+
+
         private void Button_DeleteCP_Click(object sender, RoutedEventArgs e)
         {
             foreach(StackPanel panel in ListBox_ControlPoints.Items)
@@ -245,6 +256,7 @@ namespace Mandelbrot_Explorer
                     return;
                 }
             }
+            ReColoring();
         }
         private void Button_ClearCP_Click(object sender, RoutedEventArgs e)
         {
@@ -272,6 +284,45 @@ namespace Mandelbrot_Explorer
             
 
             return points;
+        }
+        private void Button_RandomCP_Click(object sender, RoutedEventArgs e)
+        {
+            Random random = new Random(DateTime.Now.Millisecond);
+            if (true)
+            {
+                ListBox_ControlPoints.Items.Clear();
+                int point = random.Next(1, 5);
+                for (int i = 0; i <= point; i++)
+                {
+                    AddControlPoint(Math.Round((double)i/point,4), new System.Windows.Media.Color()
+                    {
+                        A = 255,
+                        R = (byte)random.Next(0, 255),
+                        G = (byte)random.Next(0, 255),
+                        B = (byte)random.Next(0, 255)
+                    });
+                }
+                Slider_Shift.Value = random.NextDouble()* Slider_Shift.Maximum % Slider_Shift.Maximum;
+                ReColoring();
+            }
+            else
+            {
+                for (int i = 0; i < ListBox_ControlPoints.Items.Count; i++)
+                {
+                    ((StackPanel)ListBox_ControlPoints.Items[i]).Children.OfType<Xceed.Wpf.Toolkit.ColorPicker>().ToList()[0].SelectedColor = new System.Windows.Media.Color()
+                    {
+                        A = 255,
+                        R = (byte)random.Next(0, 255),
+                        G = (byte)random.Next(0, 255),
+                        B = (byte)random.Next(0, 255)
+                    };
+                }
+            }
+        }
+  
+        private void Slider_Shift_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            ReColoring();
         }
     }
 }

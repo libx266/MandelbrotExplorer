@@ -17,7 +17,7 @@
                 <Grid>
                     <StackPanel Orientation="Vertical" Margin="10">
                         <Button Content="Start" Click="Button_Start" Margin="3"></Button>
-
+                        <ProgressBar x:Name="progressBar" Height="20" Margin="5" Visibility="Collapsed"></ProgressBar>
                         <Label HorizontalAlignment="Left" FontWeight="Bold">Position</Label>
                         <StackPanel Orientation="Horizontal">
                             <Label>X</Label>
@@ -39,6 +39,7 @@
                                 <TextBlock>200</TextBlock>
                                 <TextBlock>500</TextBlock>
                                 <TextBlock>1000</TextBlock>
+                                <TextBlock>2000</TextBlock>
                                 <TextBlock>5000</TextBlock>
                                 <TextBlock>10000</TextBlock>
                                 <TextBlock>Custom</TextBlock>
@@ -60,14 +61,16 @@
                             <Label >Shift</Label>
                             <Slider x:Name="Slider_Shift" MinWidth="245" VerticalAlignment="Center" AutoToolTipPlacement="TopLeft"
                                 AutoToolTipPrecision="0" Maximum="400"
-                                AutomationProperties.HelpText="Smooth change of colors" LargeChange="50"/>
+                                AutomationProperties.HelpText="Smooth change of colors" LargeChange="50" PreviewMouseLeftButtonUp="Slider_Shift_PreviewMouseLeftButtonUp"/>
+
                         </StackPanel>
                         <StackPanel>
                             <Label>Color Gradient</Label>
                         </StackPanel >
                         <StackPanel Orientation="Horizontal" >
                             <Button x:Name="Button_AddCP" Margin="5" Width="80" Click="Button_AddCP_Click">Add</Button>
-                            <Button x:Name="Button_ClearCP" Margin="5" Width="50" Click="Button_ClearCP_Click">Clear</Button>
+                            <Button Name="Button_RandomCP" Margin="5" Width="80" Click="Button_RandomCP_Click">Random</Button>
+                            <Button x:Name="Button_ClearCP" Margin="5" Width="80" Click="Button_ClearCP_Click">Clear</Button>
                         </StackPanel>
                         <ListBox x:Name="ListBox_ControlPoints" Margin="5">
                             
