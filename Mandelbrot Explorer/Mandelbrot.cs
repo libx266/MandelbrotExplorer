@@ -95,7 +95,6 @@ namespace ConsoleMandelBrot
             double x = XCenter - ImageWidth / 2.0d;
             double y = YCenter - ImageWidth / 2.0d;
             object locker = new object();
-            int done = 0;
   
             for (int xpix = 0; xpix < Resolution; xpix++)
             {

@@ -238,30 +238,33 @@ namespace Mandelbrot_Explorer
             stack.Name = $"StackPanel_CP{ListBox_ControlPoints.Items.Count}";
 
             ListBox_ControlPoints.Items.Add(stack);
-        }
 
+            SetRectGradient();
+        }
         private void ColorPicker_Closed(object sender, RoutedEventArgs e)
         {
+            SetRectGradient();
             ReColoring();
         }
-
-
         private void Button_DeleteCP_Click(object sender, RoutedEventArgs e)
         {
+            
             foreach(StackPanel panel in ListBox_ControlPoints.Items)
             {
                 if (panel.Children.IndexOf((Button)sender) != -1)
                 {
                     ListBox_ControlPoints.Items.Remove(panel);
-                    return;
+                    break;
                 }
             }
-            ReColoring();
+            SetRectGradient();
+            if(ListBox_ControlPoints.Items.Count>=2) ReColoring();
         }
         private void Button_ClearCP_Click(object sender, RoutedEventArgs e)
         {
             ListBox_ControlPoints.Items.Clear();
             AddControlPoint(0, new System.Windows.Media.Color { A = 255, R = 255, G = 255, B = 255 });
+            SetRectGradient();
             //AddControlPoint(1, new System.Windows.Media.Color { A = 255, R = 0, G = 0, B = 0 });
         }
         private List<ControlPoint> GetControlPoints()
@@ -319,10 +322,76 @@ namespace Mandelbrot_Explorer
                 }
             }
         }
-  
         private void Slider_Shift_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             ReColoring();
+        }
+        private void SetRectGradient()
+        {
+
+            GradientStopCollection gradients = new GradientStopCollection();
+            List<ControlPoint> controlPoints = new List<ControlPoint>();
+            if (ListBox_ControlPoints.Items.Count >= 2)
+            {
+                controlPoints = GetControlPoints();
+                foreach (var point in controlPoints)
+                {
+                    gradients.Add(new GradientStop(new System.Windows.Media.Color()
+                    {
+                        A = 255,
+                        R = point.Color.R,
+                        G = point.Color.G,
+                        B = point.Color.B
+                    }, point.Position));
+                }
+            }
+            else if (ListBox_ControlPoints.Items.Count == 1)
+            {
+                System.Windows.Media.Color color = (System.Windows.Media.Color)((StackPanel)ListBox_ControlPoints.Items[0]).Children.OfType<Xceed.Wpf.Toolkit.ColorPicker>().ToList()[0].SelectedColor;
+                Rect_Graient.Fill = new SolidColorBrush(color);
+            }
+            else if (ListBox_ControlPoints.Items.Count == 0)
+            {
+                Rect_Graient.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255));
+            }
+
+            LinearGradientBrush brush = new LinearGradientBrush(gradients);
+            Rect_Graient.Fill = brush;
+        }
+        private void SetRectGradient(List<ControlPoint> controlPoints)
+        {
+
+            GradientStopCollection gradients = new GradientStopCollection();
+            if (controlPoints.Count >= 2)
+            {
+                
+                foreach (var point in controlPoints)
+                {
+                    gradients.Add(new GradientStop(new System.Windows.Media.Color()
+                    {
+                        A = 255,
+                        R = point.Color.R,
+                        G = point.Color.G,
+                        B = point.Color.B
+                    }, point.Position));
+                }
+            }
+            else if (controlPoints.Count == 1)
+            {
+                System.Windows.Media.Color color = new System.Windows.Media.Color() { A = 255,
+                    R = controlPoints[0].Color.R,
+                    G = controlPoints[0].Color.G,
+                    B = controlPoints[0].Color.B
+                };
+                Rect_Graient.Fill = new SolidColorBrush(color);
+            }
+            else if (controlPoints.Count == 0)
+            {
+                Rect_Graient.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255));
+            }
+
+            LinearGradientBrush brush = new LinearGradientBrush(gradients);
+            Rect_Graient.Fill = brush;
         }
     }
 }

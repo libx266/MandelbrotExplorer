@@ -13,6 +13,12 @@ namespace ConsoleMandelBrot
 
         public ColorGradient(List<ControlPoint> controlPoints)
         {
+            double position = 1 + 1.0 / (controlPoints.Count - 1);
+            controlPoints.Add(new ControlPoint(1,controlPoints[0].Color));
+            for (int i = 0; i < controlPoints.Count-1; i++)
+            {
+                controlPoints[i].Position = controlPoints[i].Position / position;
+            }
             this.controlPoints=controlPoints;
         }
 
