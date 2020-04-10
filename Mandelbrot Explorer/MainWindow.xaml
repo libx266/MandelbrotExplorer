@@ -98,7 +98,7 @@
 
             </Grid>
             <Grid >
-                <Image x:Name="FractalImage">
+                <Image x:Name="FractalImage" MouseLeftButtonUp="FractalImage_MouseLeftButtonUp">
 
                 </Image>
             </Grid>

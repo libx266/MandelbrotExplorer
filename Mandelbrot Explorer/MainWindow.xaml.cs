@@ -94,8 +94,9 @@ namespace Mandelbrot_Explorer
             
                 
         }
-        private void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS, ColorGradient colorGradient)
+        private async void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS, ColorGradient colorGradient)
         {
+           
             if (mandelbrot == null)
             {
                 mandelbrot = new Mandelbrot(x, y, width, RESOLUTION, ITERATIONS);
@@ -110,8 +111,9 @@ namespace Mandelbrot_Explorer
                 mandelbrot.MaxIter = ITERATIONS;
                 mandelbrot.ColorGradient = colorGradient;
             }
+            //Bitmap bitmap = new Bitmap(RESOLUTION, RESOLUTION);
             mandelbrot.Calculate();
-            
+
             try
             {
                 Bitmap canvas = mandelbrot.MakeBitmap(Slider_Shift.Value, Convert.ToInt32(TextBox_IterCycle.Text));
@@ -392,6 +394,46 @@ namespace Mandelbrot_Explorer
 
             LinearGradientBrush brush = new LinearGradientBrush(gradients);
             Rect_Graient.Fill = brush;
+        }
+
+        private void FractalImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            System.Windows.Controls.Image image = (System.Windows.Controls.Image)sender;
+            System.Windows.Point mousePos = Mouse.GetPosition(image);
+            mousePos.Y = 0.5*image.ActualHeight - mousePos.Y;
+            mousePos.X = mousePos.X - 0.5 * image.ActualHeight;
+            double newX, newY;
+            newX = Convert.ToDouble(textbox_xpos.Text.Replace('.',',')) + mousePos.X * Convert.ToDouble(textbox_width.Text.Replace('.', ',')) / image.ActualWidth;
+            newY = Convert.ToDouble(textbox_ypos.Text.Replace('.', ',')) + mousePos.Y * Convert.ToDouble(textbox_width.Text.Replace('.', ',')) / image.ActualHeight;
+            Console.WriteLine(newY.ToString());
+            try
+            {
+                List<ControlPoint> list = GetControlPoints();
+                ColorGradient colorGradient = new ColorGradient(list);
+
+
+                int iterations;
+                if (((TextBlock)ComboBox_Iter.SelectedItem).Text == "Custom")
+                {
+                    iterations = Convert.ToInt32(TextBox_CustomIter.Text);
+                }
+                else iterations = Convert.ToInt32(((TextBlock)ComboBox_Iter.SelectedItem).Text);
+                textbox_xpos.Text = newX.ToString();
+                textbox_ypos.Text = newY.ToString();
+                textbox_width.Text = (Convert.ToDouble(textbox_width.Text.Replace('.', ',')) / 2).ToString();
+                GoMandelbrot(
+                    Convert.ToDouble(textbox_xpos.Text.Replace('.', ',')),
+                    Convert.ToDouble(textbox_ypos.Text.Replace('.', ',')),
+                    Convert.ToDouble(textbox_width.Text.Replace('.', ',')),
+                    Convert.ToInt32(textbox_res.Text),
+                    iterations,
+                    colorGradient);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
         }
     }
 }
