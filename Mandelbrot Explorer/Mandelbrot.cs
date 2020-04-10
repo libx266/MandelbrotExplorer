@@ -139,65 +139,7 @@ namespace ConsoleMandelBrot
             }
             */
         }
-        public void Calculate(int line)
-        {
-            System.Diagnostics.Stopwatch myStopwatch = new System.Diagnostics.Stopwatch();
-            myStopwatch.Start();
-            
-            double x = XCenter - ImageWidth / 2.0d;
-            double y = ImageWidth / 2.0d - YCenter;
-            object locker = new object();
-            int ypix = line;
-            for (int xpix = 0; xpix < Resolution; xpix++)
-            {
-                (int, double) tuple;
-                lock (locker)
-                {
-                    tuple = CalculateIters(x, y, MaxIter);
-                }
-                lock (dataIter)
-                    dataIter[xpix, ypix] = tuple.Item1;
-                lock (dataAbs)
-                    dataAbs[xpix, ypix] = tuple.Item2;
-                /*
-                Parallel.For(0, Resolution, ypix =>
-                {
-
-                    (int, double) tuple;
-                    lock (locker)
-                    {
-                        y = YCenter - ImageWidth / 2 + ImageWidth / Resolution * ypix;
-                        tuple = CalculateIters(x, y, MaxIter);
-                    }
-                    lock (dataIter)
-                        dataIter[xpix, ypix] = tuple.Item1;
-                    lock (dataAbs)
-                        dataAbs[xpix, ypix] = tuple.Item2;
-
-
-                });
-                */
-                x += ImageWidth / Resolution;
-               
-            }
-            myStopwatch.Stop();
-            //MessageBox.Show(myStopwatch.ElapsedMilliseconds.ToString());
-            /*
-            for (int xpix = 0; xpix < resolution; xpix++)
-            {
-                for(int ypix=0; ypix<resolution; ypix++)
-                {
-
-                    y = yCenter - imageWidth / 2 + imageWidth / resolution * ypix;
-                    //canvas.SetPixel(xpix, ypix, MandelbrotColor(x, y, maxIter));
-                    var tuple = CalculateIters(x, y, maxIter);
-                    dataIter[xpix, ypix] = tuple.Item1;
-                    dataAbs[xpix, ypix] = tuple.Item2;
-                }
-                x += imageWidth / resolution;
-            }
-            */
-        }
+        
         public async void CalculateAsync()
         {
             await Task.Run(() => Calculate());

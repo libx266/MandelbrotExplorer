@@ -395,7 +395,6 @@ namespace Mandelbrot_Explorer
             LinearGradientBrush brush = new LinearGradientBrush(gradients);
             Rect_Graient.Fill = brush;
         }
-
         private void FractalImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             System.Windows.Controls.Image image = (System.Windows.Controls.Image)sender;
@@ -434,6 +433,12 @@ namespace Mandelbrot_Explorer
                 MessageBox.Show(ex.Message);
             }
 
+        }
+        private void RenderingState(double done)
+        {
+            progressBar.Value = done;
+            if (done == 1) progressBar.Visibility = Visibility.Collapsed;
+            else progressBar.Visibility = Visibility.Visible;
         }
     }
 }
