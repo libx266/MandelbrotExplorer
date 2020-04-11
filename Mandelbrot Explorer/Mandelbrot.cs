@@ -78,15 +78,21 @@ namespace ConsoleMandelBrot
         public Bitmap MakeBitmap(double shift, int iterCycle)
         {
             Bitmap canvas = new Bitmap(Resolution, Resolution);
-
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            
             for (int x = 0; x < Resolution; x++)
             {
+                
                 for (int y = 0; y < Resolution; y++)
                 {
                     canvas.SetPixel(x, Resolution - y - 1, MandelbrotColor(dataIter[x, y], dataAbs[x, y], MaxIter, shift, iterCycle));
                 }
+                
             }
 
+            stopwatch.Stop();
+            
             return canvas;
         }
         public void Calculate()
