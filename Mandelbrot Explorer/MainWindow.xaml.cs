@@ -112,7 +112,7 @@ namespace Mandelbrot_Explorer
                 mandelbrot.ColorGradient = colorGradient;
             }
             //Bitmap bitmap = new Bitmap(RESOLUTION, RESOLUTION);
-            mandelbrot.Calculate();
+            mandelbrot.CalculateOpenCL();
 
             try
             {
@@ -439,6 +439,12 @@ namespace Mandelbrot_Explorer
             progressBar.Value = done;
             if (done == 1) progressBar.Visibility = Visibility.Collapsed;
             else progressBar.Visibility = Visibility.Visible;
+        }
+
+        private void Button_XUITA(object sender, RoutedEventArgs e)
+        {
+            
+
         }
     }
 }

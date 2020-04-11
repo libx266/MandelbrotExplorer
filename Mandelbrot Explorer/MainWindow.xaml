@@ -17,6 +17,7 @@
                 <Grid>
                     <StackPanel Orientation="Vertical" Margin="10">
                         <Button Height="30" Content="Start" Click="Button_Start" Margin="3"></Button>
+                        <Button Height="30" Content="XUITA" Click="Button_XUITA" Margin="3"></Button>
                         <ProgressBar x:Name="progressBar" Height="20" Margin="5" Visibility="Collapsed"></ProgressBar>
                         <Label HorizontalAlignment="Left" FontWeight="Bold">Position</Label>
                         <StackPanel Orientation="Horizontal">

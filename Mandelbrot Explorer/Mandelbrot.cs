@@ -122,22 +122,100 @@ namespace ConsoleMandelBrot
                 Console.WriteLine($"{100 * xpix / Resolution}%");
             }
             myStopwatch.Stop();
-            //MessageBox.Show(myStopwatch.ElapsedMilliseconds.ToString());
-            /*
-            for (int xpix = 0; xpix < resolution; xpix++)
+            
+            
+        }
+
+        public void CalculateOpenCL()
+        {
+            Stopwatch myStopwatch = new Stopwatch();
+            myStopwatch.Start();
+            dataIter = new int[Resolution, Resolution];
+            dataAbs = new double[Resolution, Resolution];
+            string vecSum = @"
+            __kernel void
+            mandelbrot(__global    int * iter,
+                   __global    double * abs, 
+                   __global double *xc,__global double *yc,__global double *width,__global int *res,__global int *maxiter)
             {
-                for(int ypix=0; ypix<resolution; ypix++)
+                int xpix=get_global_id(0);
+                int ypix=get_global_id(1);
+
+
+                double x = *xc - *width/2 + *width/(*res)*xpix;
+                double y = *yc - *width/2 + *width/(*res)*ypix;
+                double Re = 0;
+                double Im = 0;
+                int i;
+                double mag = 0;
+                for (i = 0; i < *maxiter; i++)
                 {
 
-                    y = yCenter - imageWidth / 2 + imageWidth / resolution * ypix;
-                    //canvas.SetPixel(xpix, ypix, MandelbrotColor(x, y, maxIter));
-                    var tuple = CalculateIters(x, y, maxIter);
-                    dataIter[xpix, ypix] = tuple.Item1;
-                    dataAbs[xpix, ypix] = tuple.Item2;
+                    double buff = Re;
+                    Re = Re * Re - Im * Im + x;
+                    Im = 2 * buff * Im + y;
+
+                    mag = Re * Re + Im * Im;
+                    if (mag >= 4) break;
                 }
-                x += imageWidth / resolution;
+                if (i == *maxiter) i = -1;
+                iter[mad_sat(ypix,*res,xpix)]=i;
+                abs[mad_sat(ypix,*res,xpix)]=mag;
             }
-            */
+            ";
+            
+            //Инициализация платформы. В скобках можно задавать параметры. По умолчанию инициализируются только GPU.
+            //OpenCLTemplate.CLCalc.InitCL(Cloo.ComputeDeviceTypes.All) позволяет инициализировать не только
+            //GPU но и CPU.
+            OpenCLTemplate.CLCalc.InitCL();
+            //Команда выдаёт список проинициализированных устройств.
+            List<Cloo.ComputeDevice> L = OpenCLTemplate.CLCalc.CLDevices;
+            //Команда устанавливает устройство с которым будет вестись работа
+            OpenCLTemplate.CLCalc.Program.DefaultCQ = 0;
+            //Компиляция программы vecSum
+            OpenCLTemplate.CLCalc.Program.Compile(new string[] { vecSum });
+            //Присовоение названия скомпилированной программе, её загрузка.
+            OpenCLTemplate.CLCalc.Program.Kernel Mandelbrot = new OpenCLTemplate.CLCalc.Program.Kernel("mandelbrot");
+            int n = Resolution;
+            dataIter = new int[Resolution, Resolution];
+            dataAbs = new double[Resolution, Resolution];
+            int[] lineDataIter = new int[Resolution * Resolution];
+            double[] lineDataAbs = new double[Resolution * Resolution];
+
+            //Загружаем вектора в память устройства
+            OpenCLTemplate.CLCalc.Program.Variable var_iter = new OpenCLTemplate.CLCalc.Program.Variable(lineDataIter);
+            OpenCLTemplate.CLCalc.Program.Variable var_abs = new OpenCLTemplate.CLCalc.Program.Variable(lineDataAbs);
+            OpenCLTemplate.CLCalc.Program.Variable var_xc = new OpenCLTemplate.CLCalc.Program.Variable(new double[] { XCenter });
+            OpenCLTemplate.CLCalc.Program.Variable var_yc = new OpenCLTemplate.CLCalc.Program.Variable(new double[] { YCenter });
+            OpenCLTemplate.CLCalc.Program.Variable var_width = new OpenCLTemplate.CLCalc.Program.Variable(new double[] { ImageWidth});
+            OpenCLTemplate.CLCalc.Program.Variable var_res = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { Resolution });
+            OpenCLTemplate.CLCalc.Program.Variable var_maxiter = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { MaxIter});
+
+            //Объявление того, кто из векторов кем является
+            OpenCLTemplate.CLCalc.Program.Variable[] args = new OpenCLTemplate.CLCalc.Program.Variable[] { var_iter, var_abs, var_xc,var_yc,
+                                                                                                           var_width, var_res, var_maxiter };
+
+            //Сколько потоков будет запущенно
+            int[] workers = new int[2] { n, n };
+
+            //Исполняем ядро VectorSum с аргументами args и колличеством потоков workers
+            Mandelbrot.Execute(args, workers);
+
+            //выгружаем из памяти
+            var_iter.ReadFromDeviceTo(lineDataIter);
+            var_abs.ReadFromDeviceTo(lineDataAbs);
+            for (int i = 0; i < Resolution; i++)
+            {
+                for (int j = 0; j < Resolution; j++)
+                {
+                    dataIter[i, j] = lineDataIter[Resolution * j + i];
+                    dataAbs[i, j] = lineDataAbs[Resolution * j + i];
+                }
+            }
+
+            myStopwatch.Stop();
+            
+            
         }
         
         public async void CalculateAsync()
