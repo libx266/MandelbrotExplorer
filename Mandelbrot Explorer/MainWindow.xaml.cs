@@ -125,6 +125,7 @@ namespace Mandelbrot_Explorer
                 //MessageBox.Show(stop.ElapsedMilliseconds.ToString());
                 fractalBitmap = canvas;
                 FractalImage.Source = BitmapToImage(canvas);
+                
             }
             catch (Exception ex)
             {

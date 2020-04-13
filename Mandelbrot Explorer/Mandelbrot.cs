@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Threading;
 using System.Windows;
+using System.IO;
 
 namespace ConsoleMandelBrot
 {
@@ -103,9 +104,9 @@ namespace ConsoleMandelBrot
         */
         public Bitmap MakeBitmapOpenCL(double shift, int iterCycle)
         {
-            
-            Bitmap bitmap = new Bitmap(Resolution,Resolution);
-            
+
+
+
             string programStr = @"
             
 __kernel void
@@ -117,17 +118,18 @@ __kernel void
             {
                int2 coor=(int2)(get_global_id(0),get_global_id(1));
                int i =*(iter+mad_sat(coor.x,*res,coor.y));
-               uint4 color = (uint4)(0,0,0,0);
-               uint red,green,blue;
+               float mag=*(abs+mad_sat(coor.x,*res,coor.y));
+               uint4 color = (uint4)(0,0,0,255);
+               int red,green,blue;
                if(i!=-1)
                {
-                   float smooth=i-log2(log2(*abs))+4+*shift;
+                   float smooth=i-log2(log2(mag))+4+*shift;
                    while(smooth>=0)
                    {
                        smooth-=*cycle;
                    }
                    smooth+=*cycle;
-                   smooth=i%(*cycle);
+                   
                    float cpos=smooth / (float)(*cycle);
                    for(int i = 1; i<(*n); i++)
                    {
@@ -141,11 +143,9 @@ __kernel void
                     }
                     color=(uint4)(blue,green,red,255);                 
                }              
-               write_imageui(bitmap, coor, color);
-                
+               write_imageui(bitmap, (int2)(coor.y,*res-1-coor.x), color);
+               
             }
-            
-
             ";
 
             OpenCLTemplate.CLCalc.InitCL();
@@ -158,7 +158,7 @@ __kernel void
             //Присовоение названия скомпилированной программе, её загрузка.
             OpenCLTemplate.CLCalc.Program.Kernel program = new OpenCLTemplate.CLCalc.Program.Kernel("program");
 
-            int[] matrix = new int[Resolution * Resolution * 4];
+            byte[] matrix = new byte[Resolution * Resolution * 4];
 
             float[] pos = new float[ColorGradient.controlPoints.Count];
             int[] R = new int[ColorGradient.controlPoints.Count];
@@ -172,8 +172,8 @@ __kernel void
                 G[i] = ColorGradient.controlPoints[i].Color.G;
                 B[i] = ColorGradient.controlPoints[i].Color.B;
             }
-            
-            OpenCLTemplate.CLCalc.Program.Image2D var_bitmap = new OpenCLTemplate.CLCalc.Program.Image2D(matrix,Resolution,Resolution);
+
+            OpenCLTemplate.CLCalc.Program.Image2D var_bitmap = new OpenCLTemplate.CLCalc.Program.Image2D(matrix, Resolution, Resolution);
             OpenCLTemplate.CLCalc.Program.Variable var_res = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { Resolution });
             OpenCLTemplate.CLCalc.Program.Variable var_maxiter = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { MaxIter });
             OpenCLTemplate.CLCalc.Program.Variable var_shift = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { Convert.ToInt32(Math.Round(shift)) });
@@ -184,25 +184,44 @@ __kernel void
             OpenCLTemplate.CLCalc.Program.Variable var_R = new OpenCLTemplate.CLCalc.Program.Variable(R);
             OpenCLTemplate.CLCalc.Program.Variable var_G = new OpenCLTemplate.CLCalc.Program.Variable(G);
             OpenCLTemplate.CLCalc.Program.Variable var_B = new OpenCLTemplate.CLCalc.Program.Variable(B);
-            OpenCLTemplate.CLCalc.Program.Variable var_n = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { ColorGradient.controlPoints.Count});
+            OpenCLTemplate.CLCalc.Program.Variable var_n = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { ColorGradient.controlPoints.Count });
             //var_bitmap.WriteToDevice(matrix);
             OpenCLTemplate.CLCalc.Program.MemoryObject[] args = new OpenCLTemplate.CLCalc.Program.MemoryObject[] { var_bitmap, var_res,
                 var_shift,var_cycle,var_iter,var_maxiter, var_abs, var_pos,var_R,var_G,var_B,var_n};
             
-            program.Execute(args, new int[] {Resolution,Resolution });
+            program.Execute(args, new int[] { Resolution, Resolution });
+
+
             var_bitmap.ReadFromDeviceTo(matrix);
-            
-            
-            
-            for (int i = 0; i < matrix.Length; i+=4)
+            Stopwatch stop = new Stopwatch();
+            stop.Start();
+
+            /*
+            for (int i = 0; i < matrix.Length; i += 4)
             {
-                bitmap.SetPixel(i/4 / Resolution, Resolution - (i/4) % Resolution -1, Color.FromArgb(matrix[i+2], matrix[i+1], matrix[i+0]));
+                bitmap.SetPixel(i / 4 / Resolution,  (i / 4) % Resolution, Color.FromArgb(matrix[i + 2], matrix[i + 1], matrix[i + 0]));
             }
-            
+            */
+            Bitmap bmp = new Bitmap(Resolution, Resolution, PixelFormat.Format32bppPArgb);
+
+            //Create a BitmapData and Lock all pixels to be written 
+            BitmapData bmpData = bmp.LockBits(
+                                 new Rectangle(0, 0, bmp.Width, bmp.Height),
+                                 ImageLockMode.WriteOnly, bmp.PixelFormat);
+            //Copy the data from the byte array into BitmapData.Scan0
+            Marshal.Copy(matrix, 0, bmpData.Scan0, matrix.Length);
+            //Unlock the pixels
+            bmp.UnlockBits(bmpData);
+
+
+            stop.Stop();
+            //MessageBox.Show(stop.ElapsedMilliseconds.ToString());
 
 
 
-            return bitmap;
+
+
+            return bmp;
         }
         /*public void Calculate()
         {
