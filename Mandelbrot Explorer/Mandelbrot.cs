@@ -33,7 +33,9 @@ namespace ConsoleMandelBrot
             });
 
         private int[,] dataIter;
-        private double[,] dataAbs;
+        private float[,] dataAbs;
+        private int[] lineDataIter;
+        private float[] lineDataAbs;
 
 
 
@@ -45,7 +47,7 @@ namespace ConsoleMandelBrot
             this.Resolution = resolution;
             this.MaxIter = maxIterations;
             dataIter = new int[resolution, resolution];
-            dataAbs = new double[resolution, resolution];
+            dataAbs = new float[resolution, resolution];
         }
 
         public Mandelbrot(double xCenter, double yCenter, double width, int resolution, int maxIterations, ColorGradient colorGradient)
@@ -57,9 +59,11 @@ namespace ConsoleMandelBrot
             this.MaxIter = maxIterations;
             this.ColorGradient = colorGradient;
             dataIter = new int[resolution, resolution];
-            dataAbs = new double[resolution, resolution];
-        }
-
+            dataAbs = new float[resolution, resolution];
+            lineDataAbs = new float[resolution * resolution];
+            lineDataIter = new int[resolution * resolution];
+    }
+        /*
         public Bitmap MakeBitmap()
         {
             Bitmap canvas = new Bitmap(Resolution, Resolution);
@@ -74,7 +78,8 @@ namespace ConsoleMandelBrot
 
             return canvas;
         }
-
+        */
+        /*
         public Bitmap MakeBitmap(double shift, int iterCycle)
         {
             Bitmap canvas = new Bitmap(Resolution, Resolution);
@@ -95,12 +100,116 @@ namespace ConsoleMandelBrot
             
             return canvas;
         }
-        public void Calculate()
+        */
+        public Bitmap MakeBitmapOpenCL(double shift, int iterCycle)
+        {
+            
+            Bitmap bitmap = new Bitmap(Resolution,Resolution);
+            
+            string programStr = @"
+            
+__kernel void
+            program(__write_only image2d_t bitmap, __constant int *res,
+                   __constant int *shift, __constant int *cycle,
+                   __constant int *iter, __constant int *maxiter,
+                   __constant float *abs, __constant float *pos,
+                   __constant int *R, __constant int *G, __constant int *B, __constant int *n)
+            {
+               int2 coor=(int2)(get_global_id(0),get_global_id(1));
+               int i =*(iter+mad_sat(coor.x,*res,coor.y));
+               uint4 color = (uint4)(0,0,0,0);
+               uint red,green,blue;
+               if(i!=-1)
+               {
+                   float smooth=i-log2(log2(*abs))+4+*shift;
+                   while(smooth>=0)
+                   {
+                       smooth-=*cycle;
+                   }
+                   smooth+=*cycle;
+                   smooth=i%(*cycle);
+                   float cpos=smooth / (float)(*cycle);
+                   for(int i = 1; i<(*n); i++)
+                   {
+                       if(cpos<(*(pos+i)))
+                       {
+                           red = round(R[i - 1] + (cpos - pos[i - 1])  / (pos[i] - pos[i - 1])* (R[i] - R[i - 1]));
+                           green = round(G[i - 1] + (cpos - pos[i - 1])  / (pos[i] - pos[i - 1])* (G[i] - G[i - 1]));
+                           blue = round(B[i - 1] + (cpos - pos[i - 1])  / (pos[i] - pos[i - 1])* (B[i] - B[i - 1]));
+                           break;
+                       }  
+                    }
+                    color=(uint4)(blue,green,red,255);                 
+               }              
+               write_imageui(bitmap, coor, color);
+                
+            }
+            
+
+            ";
+
+            OpenCLTemplate.CLCalc.InitCL();
+            List<Cloo.ComputeDevice> L = OpenCLTemplate.CLCalc.CLDevices;
+            //Команда устанавливает устройство с которым будет вестись работа
+            OpenCLTemplate.CLCalc.Program.DefaultCQ = 0;
+            //Компиляция программы vecSum
+            OpenCLTemplate.CLCalc.Program.Compile(new string[] { programStr });
+
+            //Присовоение названия скомпилированной программе, её загрузка.
+            OpenCLTemplate.CLCalc.Program.Kernel program = new OpenCLTemplate.CLCalc.Program.Kernel("program");
+
+            int[] matrix = new int[Resolution * Resolution * 4];
+
+            float[] pos = new float[ColorGradient.controlPoints.Count];
+            int[] R = new int[ColorGradient.controlPoints.Count];
+            int[] G = new int[ColorGradient.controlPoints.Count];
+            int[] B = new int[ColorGradient.controlPoints.Count];
+
+            for (int i = 0; i < ColorGradient.controlPoints.Count; i++)
+            {
+                pos[i] = float.Parse(ColorGradient.controlPoints[i].Position.ToString());
+                R[i] = ColorGradient.controlPoints[i].Color.R;
+                G[i] = ColorGradient.controlPoints[i].Color.G;
+                B[i] = ColorGradient.controlPoints[i].Color.B;
+            }
+            
+            OpenCLTemplate.CLCalc.Program.Image2D var_bitmap = new OpenCLTemplate.CLCalc.Program.Image2D(matrix,Resolution,Resolution);
+            OpenCLTemplate.CLCalc.Program.Variable var_res = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { Resolution });
+            OpenCLTemplate.CLCalc.Program.Variable var_maxiter = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { MaxIter });
+            OpenCLTemplate.CLCalc.Program.Variable var_shift = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { Convert.ToInt32(Math.Round(shift)) });
+            OpenCLTemplate.CLCalc.Program.Variable var_cycle = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { iterCycle });
+            OpenCLTemplate.CLCalc.Program.Variable var_iter = new OpenCLTemplate.CLCalc.Program.Variable(lineDataIter);
+            OpenCLTemplate.CLCalc.Program.Variable var_abs = new OpenCLTemplate.CLCalc.Program.Variable(lineDataAbs);
+            OpenCLTemplate.CLCalc.Program.Variable var_pos = new OpenCLTemplate.CLCalc.Program.Variable(pos);
+            OpenCLTemplate.CLCalc.Program.Variable var_R = new OpenCLTemplate.CLCalc.Program.Variable(R);
+            OpenCLTemplate.CLCalc.Program.Variable var_G = new OpenCLTemplate.CLCalc.Program.Variable(G);
+            OpenCLTemplate.CLCalc.Program.Variable var_B = new OpenCLTemplate.CLCalc.Program.Variable(B);
+            OpenCLTemplate.CLCalc.Program.Variable var_n = new OpenCLTemplate.CLCalc.Program.Variable(new int[] { ColorGradient.controlPoints.Count});
+            //var_bitmap.WriteToDevice(matrix);
+            OpenCLTemplate.CLCalc.Program.MemoryObject[] args = new OpenCLTemplate.CLCalc.Program.MemoryObject[] { var_bitmap, var_res,
+                var_shift,var_cycle,var_iter,var_maxiter, var_abs, var_pos,var_R,var_G,var_B,var_n};
+            
+            program.Execute(args, new int[] {Resolution,Resolution });
+            var_bitmap.ReadFromDeviceTo(matrix);
+            
+            
+            
+            for (int i = 0; i < matrix.Length; i+=4)
+            {
+                bitmap.SetPixel(i/4 / Resolution, Resolution - (i/4) % Resolution -1, Color.FromArgb(matrix[i+2], matrix[i+1], matrix[i+0]));
+            }
+            
+
+
+
+            return bitmap;
+        }
+        /*public void Calculate()
         {
             System.Diagnostics.Stopwatch myStopwatch = new System.Diagnostics.Stopwatch();
             myStopwatch.Start();
             dataIter = new int[Resolution, Resolution];
-            dataAbs = new double[Resolution, Resolution];
+            dataAbs = new float[Resolution, Resolution];
 
             double x = XCenter - ImageWidth / 2.0d;
             double y = ImageWidth / 2.0d - YCenter;
@@ -111,7 +220,7 @@ namespace ConsoleMandelBrot
                 Parallel.For(0, Resolution, ypix =>
                 {
 
-                    (int, double) tuple;
+                    (int, float) tuple;
                     lock (locker)
                     {
                         y = YCenter - ImageWidth / 2 + ImageWidth / Resolution * ypix;
@@ -131,18 +240,17 @@ namespace ConsoleMandelBrot
             
             
         }
-
+        */
         public void CalculateOpenCL()
         {
-            Stopwatch myStopwatch = new Stopwatch();
-            myStopwatch.Start();
+            
             dataIter = new int[Resolution, Resolution];
-            dataAbs = new double[Resolution, Resolution];
+            dataAbs = new float[Resolution, Resolution];
             string vecSum = @"
             __kernel void
             mandelbrot(__global    int * iter,
-                   __global    double * abs, 
-                   __global double *xc,__global double *yc,__global double *width,__global int *res,__global int *maxiter)
+                   __global    float * abs, 
+                   __constant double *xc,__constant double *yc,__constant double *width,__constant int *res,__constant int *maxiter)
             {
                 int xpix=get_global_id(0);
                 int ypix=get_global_id(1);
@@ -153,7 +261,7 @@ namespace ConsoleMandelBrot
                 double Re = 0;
                 double Im = 0;
                 int i;
-                double mag = 0;
+                float mag = 0;
                 for (i = 0; i < *maxiter; i++)
                 {
 
@@ -184,9 +292,9 @@ namespace ConsoleMandelBrot
             OpenCLTemplate.CLCalc.Program.Kernel Mandelbrot = new OpenCLTemplate.CLCalc.Program.Kernel("mandelbrot");
             int n = Resolution;
             dataIter = new int[Resolution, Resolution];
-            dataAbs = new double[Resolution, Resolution];
-            int[] lineDataIter = new int[Resolution * Resolution];
-            double[] lineDataAbs = new double[Resolution * Resolution];
+            dataAbs = new float[Resolution, Resolution];
+            lineDataIter = new int[Resolution * Resolution];
+            lineDataAbs = new float[Resolution * Resolution];
 
             //Загружаем вектора в память устройства
             OpenCLTemplate.CLCalc.Program.Variable var_iter = new OpenCLTemplate.CLCalc.Program.Variable(lineDataIter);
@@ -210,6 +318,7 @@ namespace ConsoleMandelBrot
             //выгружаем из памяти
             var_iter.ReadFromDeviceTo(lineDataIter);
             var_abs.ReadFromDeviceTo(lineDataAbs);
+            /*
             for (int i = 0; i < Resolution; i++)
             {
                 for (int j = 0; j < Resolution; j++)
@@ -218,16 +327,12 @@ namespace ConsoleMandelBrot
                     dataAbs[i, j] = lineDataAbs[Resolution * j + i];
                 }
             }
-
-            myStopwatch.Stop();
+            */
+            
             
             
         }
-        
-        public async void CalculateAsync()
-        {
-            await Task.Run(() => Calculate());
-        }
+        /*
         private Color MandelbrotColor(int iter, double abs, int maxIter)
         {
             if (iter == -1) return Color.FromArgb(0, 0, 0);
@@ -245,7 +350,7 @@ namespace ConsoleMandelBrot
             //Console.WriteLine(abs);
             return ColorGradient.GetColor((Smooth(iter, abs) + shift) % iterCycle / iterCycle);
         }
-        private (int,double) CalculateIters(double x, double y, int maxIter)
+        private (int,float) CalculateIters(double x, double y, int maxIter)
         {
             double Re = 0;
             double Im = 0;
@@ -265,11 +370,11 @@ namespace ConsoleMandelBrot
             if (i == maxIter) i = -1;
             return (i, abs);
         }
-        private double Smooth(double n, double abs)
+        private double Smooth(double n, float abs)
         {
             double pon = n - Math.Log(Math.Log(abs, 2), 2) + 4;
             return pon;
-        }
+        }*/
 
         public object Clone()
         {

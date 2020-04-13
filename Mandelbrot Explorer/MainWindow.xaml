@@ -17,6 +17,7 @@
                 <Grid>
                     <StackPanel Orientation="Vertical" Margin="10">
                         <Button Height="30" Content="Start" Click="Button_Start" Margin="3"></Button>
+                        
                         <ProgressBar x:Name="progressBar" Height="20" Margin="5" Visibility="Collapsed"></ProgressBar>
                         <Label HorizontalAlignment="Left" FontWeight="Bold">Position</Label>
                         <StackPanel Orientation="Horizontal">
@@ -29,7 +30,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label>Width</Label>
-                            <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="7E-13" />
+                            <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="7E-11" />
                         </StackPanel>
 
                         <Label HorizontalAlignment="Left" FontWeight="Bold">Render Parametrs</Label>
@@ -49,7 +50,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label>Resolution</Label>
-                            <TextBox x:Name="textbox_res" MinWidth="50" Margin="5" Text="400"/>
+                            <TextBox x:Name="textbox_res" MinWidth="50" Margin="5" Text="600"/>
                         </StackPanel>
 
                         <Label HorizontalAlignment="Left" FontWeight="Bold" Content="Coloring Parametrs"/>

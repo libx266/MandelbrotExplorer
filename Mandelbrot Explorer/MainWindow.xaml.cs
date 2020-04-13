@@ -1,5 +1,6 @@
 ﻿using ConsoleMandelBrot;
 using Microsoft.Win32;
+using OpenCLTemplate;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -58,14 +59,15 @@ namespace Mandelbrot_Explorer
                     B = point.Color.B
                 });
             }
-
+            
             Button_Start(new object(), new RoutedEventArgs());
 
-
-        }       
+            
+        }
+        
         private async void Button_Start(object sender, RoutedEventArgs e)
         {
-
+            
             try
             {
                 List<ControlPoint> list = GetControlPoints();
@@ -116,7 +118,11 @@ namespace Mandelbrot_Explorer
 
             try
             {
-                Bitmap canvas = mandelbrot.MakeBitmap(Slider_Shift.Value, Convert.ToInt32(TextBox_IterCycle.Text));
+                Stopwatch stop = new Stopwatch();
+                stop.Start();
+                Bitmap canvas = mandelbrot.MakeBitmapOpenCL(Slider_Shift.Value, Convert.ToInt32(TextBox_IterCycle.Text));
+                stop.Stop();
+                //MessageBox.Show(stop.ElapsedMilliseconds.ToString());
                 fractalBitmap = canvas;
                 FractalImage.Source = BitmapToImage(canvas);
             }
@@ -176,7 +182,7 @@ namespace Mandelbrot_Explorer
             try
             {
                 mandelbrot.ColorGradient = new ColorGradient(GetControlPoints());
-                fractalBitmap = mandelbrot.MakeBitmap(Slider_Shift.Value,
+                fractalBitmap = mandelbrot.MakeBitmapOpenCL(Slider_Shift.Value,
                                                       Convert.ToInt32(TextBox_IterCycle.Text));
                 FractalImage.Source = BitmapToImage(fractalBitmap);
             } 
