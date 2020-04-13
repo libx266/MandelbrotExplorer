@@ -453,5 +453,10 @@ namespace Mandelbrot_Explorer
             
 
         }
+
+        private void textbox_width_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

@@ -30,7 +30,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label>Width</Label>
-                            <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="7E-11" />
+                            <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="4.0E-8" TextChanged="textbox_width_TextChanged" />
                         </StackPanel>
 
                         <Label HorizontalAlignment="Left" FontWeight="Bold">Render Parametrs</Label>
@@ -50,7 +50,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label>Resolution</Label>
-                            <TextBox x:Name="textbox_res" MinWidth="50" Margin="5" Text="600"/>
+                            <TextBox x:Name="textbox_res" MinWidth="50" Margin="5" Text="1000"/>
                         </StackPanel>
 
                         <Label HorizontalAlignment="Left" FontWeight="Bold" Content="Coloring Parametrs"/>
