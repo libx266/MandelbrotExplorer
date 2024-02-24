@@ -1,4 +1,5 @@
 ﻿using ConsoleMandelBrot;
+using Mandelbrot_Explorer.Entity;
 using Microsoft.Win32;
 using OpenCLTemplate;
 using System;
@@ -10,6 +11,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +25,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
 namespace Mandelbrot_Explorer
 {
     /// <summary>
@@ -29,6 +33,16 @@ namespace Mandelbrot_Explorer
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static string path = $"C:\\Users\\{Environment.UserName}\\AppData\\Roaming\\MandelbrotCL";
+        public string pathSettings = $"{path}\\Settings";
+        public string pathPalettes = $"{path}\\Palettes";
+        public string pathFractals = $"{path}\\Fractals";
+
+        public string _Resolutions;
+
+        public bool paletteSaved = false;
+        public bool fractalSaved = false;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -39,6 +53,23 @@ namespace Mandelbrot_Explorer
 
         private void Init()
         {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+                Directory.CreateDirectory(pathSettings);
+                Directory.CreateDirectory(pathFractals);
+                Directory.CreateDirectory(pathPalettes);
+            }
+
+            if (!File.Exists($"{pathSettings}\\config.json"))
+            {
+                string json = JsonSerializer.Serialize<ConfigJson>(new ConfigJson() { countPalette = 1});
+                File.WriteAllText($"{pathSettings}\\config.json", json);
+            }
+
+            
+
+
             List<ControlPoint> list = new List<ControlPoint>() {
                 new ControlPoint(0.0, System.Drawing.Color.FromArgb(255, 255, 255)),
                 new ControlPoint(0.125, System.Drawing.Color.FromArgb(255, 0, 0)),
@@ -64,9 +95,17 @@ namespace Mandelbrot_Explorer
 
             
         }
+
+        private void SaveSettings(ConfigJson configJson)
+        {
+            string json = JsonSerializer.Serialize<ConfigJson>(configJson);
+            File.WriteAllText($"{pathSettings}\\config.json", json);
+        }
         
         private async void Button_Start(object sender, RoutedEventArgs e)
         {
+            //FractalImage.Width = Convert.ToDouble(textbox_width_image.Text);
+            //FractalImage.Height = Convert.ToDouble(textbox_height_image.Text);
             
             try
             {
@@ -98,7 +137,20 @@ namespace Mandelbrot_Explorer
         }
         private async void GoMandelbrot(double x, double y, double width, int RESOLUTION, int ITERATIONS, ColorGradient colorGradient)
         {
-           
+            FractalImage.Width = Convert.ToDouble(textbox_width_image.Text);
+            FractalImage.Height = Convert.ToDouble(textbox_height_image.Text);
+
+            if (FractalImage.Width > FractalImage.Height)
+            {
+                RESOLUTION = Convert.ToInt32(FractalImage.Width);
+                
+            }
+            else
+            {
+                RESOLUTION = Convert.ToInt32(FractalImage.Height);
+            }
+            textbox_res.Text = RESOLUTION.ToString();
+            
             if (mandelbrot == null)
             {
                 mandelbrot = new Mandelbrot(x, y, width, RESOLUTION, ITERATIONS);
@@ -131,8 +183,11 @@ namespace Mandelbrot_Explorer
             {
                 MessageBox.Show(ex.Message);
             }
+
+            MessageBox.Show($"{FractalImage.Height}x{FractalImage.Width}");
             
         }
+
         private ImageSource BitmapToImage(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
@@ -331,6 +386,12 @@ namespace Mandelbrot_Explorer
                 }
             }
         }
+
+        /// <summary>
+        /// Обработка слайдера Shift при клике.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Slider_Shift_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             ReColoring();
@@ -402,6 +463,12 @@ namespace Mandelbrot_Explorer
             LinearGradientBrush brush = new LinearGradientBrush(gradients);
             Rect_Graient.Fill = brush;
         }
+
+        /// <summary>
+        /// Обработка нажатия на лкм.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FractalImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             System.Windows.Controls.Image image = (System.Windows.Controls.Image)sender;
@@ -448,6 +515,91 @@ namespace Mandelbrot_Explorer
             else progressBar.Visibility = Visibility.Visible;
         }
 
+
+
+        //todo: градиент
+        private void button_Open_DataFractal(object sender, RoutedEventArgs e) 
+        {
+            var openFileDialog = new OpenFileDialog()
+            {
+                InitialDirectory = pathFractals
+            };
+            openFileDialog.ShowDialog();
+            var fractal = JsonSerializer.Deserialize<Fractal>(File.ReadAllText(openFileDialog.FileName));
+
+            var a = File.ReadAllText(pathPalettes + "\\" + fractal.linkPalette);
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                Converters = { new ColorConverter() }
+            };
+            List<ControlPoint> palette = JsonSerializer.Deserialize<List<ControlPoint>>(File.ReadAllText(pathPalettes + "\\" + fractal.linkPalette), new JsonSerializerOptions() { Converters = { new ColorConverter() } });
+
+            textbox_xpos.Text = fractal.XCenter.ToString();
+            textbox_ypos.Text = fractal.YCenter.ToString();
+            textbox_width.Text = fractal.width.ToString();
+            textbox_width_image.Text = fractal.ImageWidth.ToString();
+            textbox_height_image.Text = fractal.ImageHeight.ToString();
+            ComboBox_Iter.Text = fractal.MaxIter.ToString();
+            
+
+            ListBox_ControlPoints.Items.Clear();
+
+            foreach (var point in palette)
+            {
+                AddControlPoint(point.Position, System.Windows.Media.Color.FromArgb(point.Color.A, point.Color.R, point.Color.G, point.Color.B));
+            }
+
+            Button_Start(new object(), new RoutedEventArgs());
+        }
+        
+        private void button_Save_DataFractal(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog() 
+            {
+                InitialDirectory = pathPalettes 
+            };
+            openFileDialog.ShowDialog();
+
+            var jsonString = JsonSerializer.Serialize<Fractal>(new Fractal()
+            {
+                ImageHeight = Convert.ToDouble(textbox_height_image.Text),
+                ImageWidth = Convert.ToDouble(textbox_width_image.Text),
+                MaxIter = mandelbrot.MaxIter,
+                width = mandelbrot.ImageWidth,
+                Resolution = mandelbrot.Resolution,
+                XCenter = mandelbrot.XCenter,
+                YCenter = mandelbrot.YCenter,
+                linkPalette = openFileDialog.SafeFileName,
+            }) ;
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.InitialDirectory = pathFractals;
+            saveFileDialog.Filter = "Json files (*.json)|*.json";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllText(saveFileDialog.FileName, jsonString);
+            }
+        }
+
+        private void button_Save_DataPalette(object sender, RoutedEventArgs e)
+        {
+            var jsonString = JsonSerializer.Serialize<List<ControlPoint>>(GetControlPoints());
+            MessageBox.Show(jsonString);
+
+            ConfigJson json = JsonSerializer.Deserialize<ConfigJson>(File.ReadAllText($"{pathSettings}\\config.json"));
+
+            string namePalette = json.countPalette++.ToString() + ".json";
+            string pathPalette = $"{pathPalettes}\\{namePalette}"; 
+
+            File.WriteAllText(pathPalette, jsonString);
+
+            SaveSettings(json);
+
+            MessageBox.Show("Completed");
+        }
+
+        
+
         private void Button_XUITA(object sender, RoutedEventArgs e)
         {
             
@@ -458,5 +610,37 @@ namespace Mandelbrot_Explorer
         {
 
         }
+
+        private void FractalImage_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+
+        }
     }
+
+    //public class ColorConverter : JsonConverter<System.Drawing.Color>
+    //{
+    //    public override System.Drawing.Color Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    //    {
+    //        using (JsonDocument doc = JsonDocument.ParseValue(ref reader))
+    //        {
+    //            JsonElement root = doc.RootElement;
+    //            int r = root.GetProperty("R").GetInt32();
+    //            int g = root.GetProperty("G").GetInt32();
+    //            int b = root.GetProperty("B").GetInt32();
+    //            int a = root.GetProperty("A").GetInt32();
+    //            return System.Drawing.Color.FromArgb(a, r, g, b);
+    //        }
+    //    }
+
+    //    public override void Write(Utf8JsonWriter writer, System.Drawing.Color value, JsonSerializerOptions options)
+    //    {
+    //        writer.WriteStartObject();
+    //        writer.WriteNumber("R", value.R);
+    //        writer.WriteNumber("G", value.G);
+    //        writer.WriteNumber("B", value.B);
+    //        writer.WriteNumber("A", value.A);
+    //        writer.WriteEndObject();
+    //    }
+    //}
+
 }

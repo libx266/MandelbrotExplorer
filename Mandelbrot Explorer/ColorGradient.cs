@@ -22,6 +22,11 @@ namespace ConsoleMandelBrot
             this.controlPoints=controlPoints;
         }
 
+        public List<ControlPoint> GetControlPoints()
+        {
+            return controlPoints;
+        }
+
         public Color GetColor(double position)
         {
             int i = 0;

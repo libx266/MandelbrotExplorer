@@ -8,7 +8,25 @@
         mc:Ignorable="d"
         Title="Mandelbrot Explorer" Height="720" Width="1280">
     <Grid>
-        <DockPanel LastChildFill="True">
+        <Menu Height="25" VerticalAlignment="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Open Fractal" Click="button_Open_DataFractal"></MenuItem>
+                <MenuItem Header="Save fractal json" Click="button_Save_DataFractal"></MenuItem>
+                <MenuItem Header="Save palette json" Click="button_Save_DataPalette"></MenuItem>
+                <Separator />
+                <MenuItem Header="Exit" ></MenuItem>
+            </MenuItem>
+        </Menu>
+        
+        <DockPanel LastChildFill="True" Margin="0,25,0,0">
+            
+
+            <Grid x:Name="FileList" DockPanel.Dock="Left" MinWidth="150">
+                
+                <ListBox x:Name="FractalFileList" >
+                    
+                </ListBox>
+            </Grid>
             <Grid DockPanel.Dock="Right" MinWidth="300">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"></RowDefinition>
@@ -28,6 +46,20 @@
                             <Label>Y</Label>
                             <TextBox x:Name="textbox_ypos" MinWidth="100" Margin="3" Text="0.226118675951765"/>
                         </StackPanel>
+
+                        <!--  -->
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <Label>Height image</Label>
+                            <TextBox x:Name="textbox_height_image" MinWidth="100" Margin="3" Text="1920"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label>Width image</Label>
+                            <TextBox x:Name="textbox_width_image" MinWidth="100" Margin="3" Text="1080"/>
+                        </StackPanel>
+                        
+                        <!-- -->
+                        
                         <StackPanel Orientation="Horizontal">
                             <Label>Width</Label>
                             <TextBox x:Name="textbox_width" MinWidth="72" Margin="5" Text="4.0E-8" TextChanged="textbox_width_TextChanged" />
@@ -99,9 +131,15 @@
 
             </Grid>
             <Grid >
-                <Image x:Name="FractalImage" MouseLeftButtonUp="FractalImage_MouseLeftButtonUp">
+                <Border x:Name="border_image" BorderThickness="2">
+                    <Image x:Name="FractalImage" 
+                       MouseLeftButtonUp="FractalImage_MouseLeftButtonUp"
+                       MouseRightButtonUp="FractalImage_MouseRightButtonUp"
+                       >
 
-                </Image>
+                    </Image>
+                </Border>
+                
             </Grid>
         </DockPanel>
 

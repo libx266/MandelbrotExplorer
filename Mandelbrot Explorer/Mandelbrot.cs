@@ -53,12 +53,12 @@ namespace ConsoleMandelBrot
 
         public Mandelbrot(double xCenter, double yCenter, double width, int resolution, int maxIterations, ColorGradient colorGradient)
         {
-            this.XCenter = xCenter;
-            this.YCenter = yCenter;
-            ImageWidth = width;
-            this.Resolution = resolution;
-            this.MaxIter = maxIterations;
-            this.ColorGradient = colorGradient;
+            this.XCenter = xCenter; // х
+            this.YCenter = yCenter; // у
+            ImageWidth = width; //хз
+            this.Resolution = resolution; //масштаб
+            this.MaxIter = maxIterations; // макс итераций
+            this.ColorGradient = colorGradient; // градиент
             dataIter = new int[resolution, resolution];
             dataAbs = new float[resolution, resolution];
             lineDataAbs = new float[resolution * resolution];
